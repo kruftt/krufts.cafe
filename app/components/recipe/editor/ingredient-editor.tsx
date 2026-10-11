@@ -1,24 +1,22 @@
 import { InputEditor, TextareaEditor } from "@components/controls";
 import { Button } from "@components/ui/button";
-import { useRecipeCache, useRecipeId } from "@hooks";
-import type { CachedIngredientData } from "@hooks/recipe-cache";
+import { useRecipeDraft } from "@hooks/recipe-draft";
+import type { RecipeBody } from "@schema";
 import { XIcon } from "lucide-react";
 
 export function IngredientEditor({
 	ingredient,
 }: {
-	ingredient: CachedIngredientData;
+	ingredient: RecipeBody.Ingredient;
 }) {
-	const { updateIngredientField, removeIngredient } = useRecipeCache(useRecipeId());
+	const { saveIngredientField, removeIngredient } = useRecipeDraft();
 
 	return (
 		<div className="flex items-start justify-start">
 			<Button
 				variant="ghost"
 				className="h-8 w-8 mr-1"
-				onClick={() =>
-					ingredient.id && removeIngredient.mutate({ id: ingredient.id })
-				}
+				onClick={() => removeIngredient(ingredient.id)}
 			>
 				<XIcon className="h-4 w-4" color="red" />
 			</Button>
@@ -26,19 +24,19 @@ export function IngredientEditor({
 				<InputEditor
 					className="ingredient__amount"
 					value={ingredient.amount}
-					onSave={updateIngredientField(ingredient.id, "amount")}
+					onSave={saveIngredientField(ingredient.id, "amount")}
 					placeholder="#"
 					resize
 				/>
 				<InputEditor
 					value={ingredient.units}
-					onSave={updateIngredientField(ingredient.id, "units")}
+					onSave={saveIngredientField(ingredient.id, "units")}
 					placeholder="units"
 					resize
 				/>
 				<TextareaEditor
 					value={ingredient.name}
-					onSave={updateIngredientField(ingredient.id, "name")}
+					onSave={saveIngredientField(ingredient.id, "name")}
 					placeholder="name"
 					resize
 				/>
@@ -46,7 +44,7 @@ export function IngredientEditor({
 					className="ingredient__preparation grow"
 					styles="grow"
 					value={ingredient.preparation}
-					onSave={updateIngredientField(ingredient.id, "preparation")}
+					onSave={saveIngredientField(ingredient.id, "preparation")}
 					placeholder="preparation"
 					resize
 				/>

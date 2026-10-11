@@ -1,33 +1,21 @@
 import { DeletionDialog, InputEditor } from "@components/controls";
 import { Button } from "@components/ui/button";
-import type { CachedIngredientGroupData } from "@hooks/recipe-cache";
-import { useRecipeCache, useRecipeId } from "@hooks/recipe-cache";
-import { getNextIndex } from "@lib/utils";
+import { useRecipeDraft } from "@hooks/recipe-draft";
+import type { RecipeBody } from "@schema";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useRef } from "react";
 import { IngredientEditor } from "./ingredient-editor";
 
 interface Props {
-	group: CachedIngredientGroupData;
+	group: RecipeBody.IngredientGroup;
 }
 
 export function IngredientGroupEditor({ group }: Props) {
 	const groupRef = useRef<HTMLDivElement>(null);
-	const { updateIngredientGroupField, removeIngredientGroup, addIngredient } =
-		useRecipeCache(useRecipeId());
-
-	const onSaveName = updateIngredientGroupField(group.id, "name");
-
-	function deleteGroup() {
-		if (group.id) removeIngredientGroup.mutate({ id: group.id });
-	}
+	const { saveGroupField, removeGroup, addIngredient } = useRecipeDraft();
 
 	function createIngredient() {
-		if (!group.id) return;
-		addIngredient.mutate({
-			groupId: group.id,
-			index: getNextIndex(group.ingredients),
-		});
+		addIngredient(group.id);
 		requestAnimationFrame(() => requestAnimationFrame(() => {
 			const el = groupRef.current;
 			if (!el) return;
@@ -44,13 +32,13 @@ export function IngredientGroupEditor({ group }: Props) {
 					placeholder="Group Name (optional)"
 					className="ingredient_group__name"
 					value={group.name}
-					onSave={onSaveName}
+					onSave={saveGroupField(group.id, "name")}
 				/>
 				<DeletionDialog
 					title="Delete Ingredient Section"
 					message="Are you sure you wish to delete this ingredient group?"
 					item={group.name}
-					onConfirm={deleteGroup}
+					onConfirm={() => removeGroup(group.id)}
 				>
 					<Button variant="ghost">
 						<XIcon color="red" className="size-6" />
@@ -59,10 +47,7 @@ export function IngredientGroupEditor({ group }: Props) {
 			</div>
 
 			{group.ingredients.map((ingredient) => (
-				<IngredientEditor
-					key={ingredient.clientKey ?? ingredient.id}
-					ingredient={ingredient}
-				/>
+				<IngredientEditor key={ingredient.id} ingredient={ingredient} />
 			))}
 
 			<Button

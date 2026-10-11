@@ -2,22 +2,16 @@ import { Header } from "@components/app";
 import { InputEditor } from "@components/controls";
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
-import { type ProcedureOptions, useRecipeCache, useRecipeId } from "@hooks";
+import type { ProcedureOptions } from "@hooks/editor";
+import { useRecipeDraft } from "@hooks/recipe-draft";
+import { Recipe } from "@schema";
 import { XIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
-interface Props extends React.ComponentProps<"div"> {
-	tags: string[];
-}
-
-export function TagsEditor({ tags }: Props) {
-	const recipeId = useRecipeId();
-	const { updateRecipe } = useRecipeCache(recipeId);
-
+export function TagsEditor() {
+	const { draft, setTags } = useRecipeDraft();
+	const tags = draft.tags;
 	const inputRef = useRef<HTMLInputElement>(null);
-	const [error, setError] = useState("");
-
-	// onSave(value, setError)
 
 	function createTag(tag: string, options: ProcedureOptions) {
 		if (tag === "") {
@@ -30,31 +24,19 @@ export function TagsEditor({ tags }: Props) {
 			return;
 		}
 
-		updateRecipe.mutate({
-			id: recipeId,
-			tags: [...tags, tag],
-		}, {
-			...options,
-			onSettled() {
-				setTimeout(() => inputRef.current?.focus());
-			}
-		});
+		const next = Recipe.Fields.shape.tags.safeParse([...tags, tag]);
+		if (!next.success) {
+			options.onError({ message: tags.length >= 20 ? "Too many tags." : "Tag is too long." });
+			return;
+		}
+
+		setTags(next.data);
+		options.onSuccess();
+		setTimeout(() => inputRef.current?.focus());
 	}
 
 	function removeTag(index: number) {
-		const next = tags.filter((_, i) => i !== index);
-
-		updateRecipe.mutate(
-			{
-				id: recipeId,
-				tags: next,
-			},
-			{
-				onError(err) {
-					setError(err.message);
-				},
-			},
-		);
+		setTags(tags.filter((_, i) => i !== index));
 	}
 
 	return (

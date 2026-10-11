@@ -1,7 +1,7 @@
 import { prisma } from "@lib/prisma";
 import { User } from "@schema";
 import { generateHandle } from "@services/user";
-import { updateRecipeSearch } from "@services/recipe";
+import { refreshAuthorSearch } from "@services/recipe";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
@@ -35,11 +35,7 @@ export const auth = betterAuth({
 			},
 			update: {
 				after: async (user) => {
-					const recipes = await prisma.recipe.findMany({
-						where: { userId: user.id },
-						select: { id: true },
-					});
-					await Promise.all(recipes.map((r) => updateRecipeSearch(r.id)));
+					await refreshAuthorSearch(user.id);
 				},
 			},
 		},

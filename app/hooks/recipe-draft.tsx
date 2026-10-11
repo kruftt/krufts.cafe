@@ -98,8 +98,8 @@ function useDraftState(initial: RecipeData) {
 		return () => window.removeEventListener("beforeunload", onBeforeUnload);
 	}, [status]);
 
-	const saveRecipeField = <K extends keyof Recipe.Fields>(field: K) =>
-		fieldSaver(Recipe.Fields.shape[field] as z.ZodType<Recipe.Fields[K]>, update, (d, v) =>
+	const saveRecipeField = <K extends "name" | "prepTime" | "cookTime" | "serves" | "intro">(field: K) =>
+		fieldSaver(Recipe.Fields.shape[field] as unknown as z.ZodType<Recipe.Fields[K]>, update, (d, v) =>
 			Ops.setField(d, field, v),
 		);
 

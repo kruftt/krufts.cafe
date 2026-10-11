@@ -5,32 +5,23 @@ import {
 	TextareaEditor,
 } from "@components/controls";
 import { Button } from "@components/ui/button";
-import type { CachedStepData } from "@hooks/recipe-cache";
-import { useRecipeCache, useRecipeId } from "@hooks/recipe-cache";
-import { getNextIndex } from "@lib/utils";
+import { useRecipeDraft } from "@hooks/recipe-draft";
+import type { RecipeBody } from "@schema";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useRef } from "react";
 import { InstructionEditor } from "./instruction-editor";
 
 interface Props {
 	index: number;
-	step: CachedStepData;
+	step: RecipeBody.Step;
 }
 
 export function StepEditor({ step, index }: Props) {
 	const instructionsRef = useRef<HTMLDivElement>(null);
-	const { updateStepField, removeStep, addInstruction } = useRecipeCache(useRecipeId());
-
-	function deleteStep() {
-		if (step.id) removeStep.mutate({ id: step.id });
-	}
+	const { saveStepField, removeStep, addInstruction } = useRecipeDraft();
 
 	function createInstruction() {
-		if (!step.id) return;
-		addInstruction.mutate({
-			stepId: step.id,
-			index: getNextIndex(step.instructions),
-		});
+		addInstruction(step.id);
 		requestAnimationFrame(() => requestAnimationFrame(() => {
 			const el = instructionsRef.current;
 			if (!el) return;
@@ -46,7 +37,7 @@ export function StepEditor({ step, index }: Props) {
 				title="Delete Step"
 				message="Are you sure you want to delete this step?"
 				item={step.name}
-				onConfirm={deleteStep}
+				onConfirm={() => removeStep(step.id)}
 			>
 				<Button variant="ghost" className="absolute z-10 top-4 right-4">
 					<XIcon color="red" className="size-7" />
@@ -58,24 +49,24 @@ export function StepEditor({ step, index }: Props) {
 				<InputEditor
 					className="grow"
 					placeholder="Step Name"
-					onSave={updateStepField(step.id, "name")}
+					onSave={saveStepField(step.id, "name")}
 					value={step.name}
 				/>
 			</Panel.Title>
 
 			<Panel.Item>
 				<TextareaEditor
-				value={step.intro}
+					value={step.intro}
 					className="step__intro"
 					placeholder="Step overview (optional)..."
-					onSave={updateStepField(step.id, "intro")}
+					onSave={saveStepField(step.id, "intro")}
 				/>
 			</Panel.Item>
 
 			<Panel.Item ref={instructionsRef}>
 				{step.instructions.map((instruction, i) => (
 					<InstructionEditor
-						key={instruction.clientKey ?? instruction.id}
+						key={instruction.id}
 						index={i + 1}
 						instruction={instruction}
 					/>
@@ -83,7 +74,6 @@ export function StepEditor({ step, index }: Props) {
 
 				<div className="text-center">
 					<Button
-						// variant="ghost"
 						className="justify-start mt-1 px-2"
 						onClick={createInstruction}
 					>

@@ -1,24 +1,19 @@
 import { Container, Header, Panel } from "@components/app";
 import { InputEditor, TextareaEditor } from "@components/controls";
 import { Button, buttonVariants } from "@components/ui/button";
-import { useRecipeCache } from "@hooks";
-import type { CachedRecipeData } from "@hooks/recipe-cache";
-import { getNextIndex } from "@lib/utils";
+import { useRecipeDraft } from "@hooks/recipe-draft";
 import { CheckSquareIcon, LinkIcon, PlusIcon, SquareIcon } from "lucide-react";
 import { Link } from "react-router";
 import { IngredientGroupEditor } from "./ingredient-group-editor";
+import { SaveStatus } from "./save-status";
 import { StepEditor } from "./step-editor";
 import { TagsEditor } from "./tags-editor";
 
-export function RecipeEditor({ recipe }: { recipe: CachedRecipeData }) {
-	const { updateRecipe, updateRecipeField, addIngredientGroup, addStep } =
-		useRecipeCache(recipe.id);
+export function RecipeEditor() {
+	const { recipe, draft, saveRecipeField, setPublished, addGroup, addStep } = useRecipeDraft();
 
 	function createIngredientGroup() {
-		addIngredientGroup.mutate({
-			recipeId: recipe.id,
-			index: getNextIndex(recipe.ingredientGroups),
-		});
+		addGroup();
 		requestAnimationFrame(() =>
 			requestAnimationFrame(() => {
 				const groups = document.querySelectorAll<HTMLInputElement>(
@@ -31,7 +26,7 @@ export function RecipeEditor({ recipe }: { recipe: CachedRecipeData }) {
 	}
 
 	function createStep() {
-		addStep.mutate({ recipeId: recipe.id, index: getNextIndex(recipe.steps) });
+		addStep();
 		requestAnimationFrame(() =>
 			requestAnimationFrame(() => {
 				const stepTitles = document.querySelectorAll<HTMLInputElement>(
@@ -52,14 +47,9 @@ export function RecipeEditor({ recipe }: { recipe: CachedRecipeData }) {
 							aria-label="Toggle published"
 							size="sm"
 							variant="outline"
-							onClick={() =>
-								updateRecipe.mutate({
-									id: recipe.id,
-									published: !recipe.published,
-								})
-							}
+							onClick={() => setPublished(!draft.published)}
 						>
-							{recipe.published ? (
+							{draft.published ? (
 								<>
 									<CheckSquareIcon />
 									Published
@@ -82,26 +72,29 @@ export function RecipeEditor({ recipe }: { recipe: CachedRecipeData }) {
 					</div>
 				</Header.Item>
 
+				<Header.Item>
+					<SaveStatus />
+				</Header.Item>
+
 				<Header.Title>
 					<InputEditor
-						value={recipe.name}
+						value={draft.name}
 						className="recipe__title"
 						inputStyle="rounded-2xl"
-						onSave={updateRecipeField(recipe.id, "name")}
-						// aria-invalid
+						onSave={saveRecipeField("name")}
 					/>
 					<div className="recipe__author">By {recipe.user.name}</div>
 				</Header.Title>
 
-				<TagsEditor tags={recipe.tags} />
+				<TagsEditor />
 
 				<Header.Item className="recipe__duration">
 					<div>
 						<div className="recipe__duration_title">Prep</div>
 						<div className="recipe__duration_entry">
 							<InputEditor
-								onSave={updateRecipeField(recipe.id, "prepTime")}
-								value={recipe.prepTime}
+								onSave={saveRecipeField("prepTime")}
+								value={draft.prepTime}
 								resize
 							/>
 							<span>min</span>
@@ -112,8 +105,8 @@ export function RecipeEditor({ recipe }: { recipe: CachedRecipeData }) {
 						<div className="recipe__duration_title">Cook</div>
 						<div className="recipe__duration_entry">
 							<InputEditor
-								onSave={updateRecipeField(recipe.id, "cookTime")}
-								value={recipe.cookTime}
+								onSave={saveRecipeField("cookTime")}
+								value={draft.cookTime}
 								resize
 							/>
 							<span>min</span>
@@ -123,7 +116,7 @@ export function RecipeEditor({ recipe }: { recipe: CachedRecipeData }) {
 					<div>
 						<div className="recipe__duration_title">Total</div>
 						<div className="recipe__duration_entry">
-							{`${recipe.prepTime + recipe.cookTime} min`}
+							{`${draft.prepTime + draft.cookTime} min`}
 						</div>
 					</div>
 				</Header.Item>
@@ -132,8 +125,8 @@ export function RecipeEditor({ recipe }: { recipe: CachedRecipeData }) {
 					Serves
 					<InputEditor
 						className="font-bold ml-1"
-						onSave={updateRecipeField(recipe.id, "serves")}
-						value={recipe.serves}
+						onSave={saveRecipeField("serves")}
+						value={draft.serves}
 						resize
 					/>
 				</Header.Item>
@@ -143,9 +136,9 @@ export function RecipeEditor({ recipe }: { recipe: CachedRecipeData }) {
 				<Panel.Item>
 					<TextareaEditor
 						className="recipe__intro"
-						onSave={updateRecipeField(recipe.id, "intro")}
+						onSave={saveRecipeField("intro")}
 						placeholder="Recipe Introduction (optional)..."
-						value={recipe.intro}
+						value={draft.intro}
 					/>
 				</Panel.Item>
 			</Panel.Section>
@@ -156,11 +149,8 @@ export function RecipeEditor({ recipe }: { recipe: CachedRecipeData }) {
 				</Panel.Title>
 
 				<Panel.Item className="ingredient_groups">
-					{recipe.ingredientGroups.map((group) => (
-						<IngredientGroupEditor
-							key={group.clientKey ?? group.id}
-							group={group}
-						/>
+					{draft.body.ingredientGroups.map((group) => (
+						<IngredientGroupEditor key={group.id} group={group} />
 					))}
 				</Panel.Item>
 
@@ -172,8 +162,8 @@ export function RecipeEditor({ recipe }: { recipe: CachedRecipeData }) {
 				</Panel.Item>
 			</Panel.Section>
 
-			{recipe.steps.map((step, i) => (
-				<StepEditor key={step.clientKey ?? step.id} index={i + 1} step={step} />
+			{draft.body.steps.map((step, i) => (
+				<StepEditor key={step.id} index={i + 1} step={step} />
 			))}
 
 			<div className="w-1/1 mt-6 text-center">

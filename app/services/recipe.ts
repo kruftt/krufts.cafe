@@ -44,6 +44,26 @@ export function buildSearchText(
 		.toLowerCase();
 }
 
+// Rewrites the search text of every recipe by an author, e.g. after a name change.
+export async function refreshAuthorSearch(userId: string) {
+	const author = await prisma.user.findUniqueOrThrow({
+		where: { id: userId },
+		select: { name: true, handle: true },
+	});
+	const recipes = await prisma.recipe.findMany({
+		where: { userId },
+		select: { id: true, name: true, tags: true, body: true },
+	});
+	await Promise.all(
+		recipes.map((r) =>
+			prisma.recipe.update({
+				where: { id: r.id },
+				data: { search: buildSearchText({ ...r, body: RecipeBody.Body.parse(r.body) }, author) },
+			}),
+		),
+	);
+}
+
 export type SaveResult =
 	| { ok: true; version: number; slug: string }
 	| { ok: false; code: "NOT_FOUND" | "FORBIDDEN" | "CONFLICT" | "BAD_REQUEST"; message?: string };

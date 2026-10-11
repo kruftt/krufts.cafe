@@ -12,9 +12,3 @@ export function formatDuration(minutes: number) {
 		? `${hours} hr${hours > 1 ? 's' : ''} ${remainder > 0 ? `${remainder} min` : ""}`
 		: `${minutes} min`;
 }
-
-
-export function getNextIndex(arr: { index: number }[]) {
-	const last = arr[arr.length - 1];
-	return last ? last.index + 1 : 0;
-}

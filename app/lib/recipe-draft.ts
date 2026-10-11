@@ -62,7 +62,7 @@ export function setField<K extends keyof Recipe.Fields>(draft: Draft, field: K, 
 
 // Ingredient groups
 
-export function addGroup(draft: Draft, id = newId()): Draft {
+export function addGroup(draft: Draft, id: string = newId()): Draft {
 	return withBody(draft, {
 		ingredientGroups: [...draft.body.ingredientGroups, { id, name: "", ingredients: [] }],
 	});
@@ -80,7 +80,7 @@ export function removeGroup(draft: Draft, groupId: string): Draft {
 
 // Ingredients
 
-export function addIngredient(draft: Draft, groupId: string, id = newId()): Draft {
+export function addIngredient(draft: Draft, groupId: string, id: string = newId()): Draft {
 	const ingredient = { id, amount: "", units: "", name: "", preparation: "" };
 	const groups = patchById(draft.body.ingredientGroups, groupId, (g) => ({
 		...g,
@@ -113,7 +113,7 @@ export function removeIngredient(draft: Draft, ingredientId: string): Draft {
 
 // Steps
 
-export function addStep(draft: Draft, id = newId()): Draft {
+export function addStep(draft: Draft, id: string = newId()): Draft {
 	return withBody(draft, {
 		steps: [...draft.body.steps, { id, name: "", intro: "", instructions: [] }],
 	});
@@ -131,7 +131,7 @@ export function removeStep(draft: Draft, stepId: string): Draft {
 
 // Instructions
 
-export function addInstruction(draft: Draft, stepId: string, id = newId()): Draft {
+export function addInstruction(draft: Draft, stepId: string, id: string = newId()): Draft {
 	const steps = patchById(draft.body.steps, stepId, (s) => ({
 		...s,
 		instructions: [...s.instructions, { id, text: "" }],
