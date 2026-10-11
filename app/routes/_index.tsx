@@ -1,17 +1,18 @@
 import { Container, Header, Panel } from "@components/app";
 import { RecipeList } from "@components/recipe/list";
 import { findRecipes } from "@services/recipe";
+import { skipRevalidateOnQueryChange } from "@lib/revalidate";
 import type { Route } from "./+types/_index";
 
-export async function loader({ request }: Route.LoaderArgs) {
+export const shouldRevalidate = skipRevalidateOnQueryChange;
+
+export async function loader() {
 	const recipes = await findRecipes({ published: true	});
-	const url = new URL(request.url);
-	const urlQuery = url.searchParams.get("q") ?? "";
-	return { recipes, urlQuery };
+	return { recipes };
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-	const { recipes, urlQuery } = loaderData;
+	const { recipes } = loaderData;
 
 	return (
 		<Container>
@@ -21,7 +22,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 				</Header.Title>
 			</Header.Section>
 			<Panel.Section className="recipe__list">
-				<RecipeList recipes={recipes} urlQuery={urlQuery} />
+				<RecipeList recipes={recipes} />
 			</Panel.Section>
 		</Container>
 	);

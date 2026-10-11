@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "bun:test";
 import { prisma } from "@lib/prisma";
 import type { Recipe, RecipeBody } from "@schema";
-import { buildSearchText, findRecipes, saveRecipe } from "./recipe";
+import { findRecipes, ingredientNamesOf, saveRecipe } from "./recipe";
 
 const body: RecipeBody.Body = {
 	ingredientGroups: [
@@ -17,20 +17,30 @@ const body: RecipeBody.Body = {
 	steps: [{ id: "s1", name: "Mix", intro: "", instructions: [{ id: "n1", text: "Stir." }] }],
 };
 
-describe("buildSearchText", () => {
-	const author = { name: "Marc", handle: "marc" };
+describe("ingredientNamesOf", () => {
+	it("collects ingredient names across groups in order", () => {
+		expect(ingredientNamesOf(body)).toEqual(["Flour", "Salt"]);
+	});
 
-	it("includes name, author, tags, and ingredient names, lowercased", () => {
-		const text = buildSearchText({ name: "Bread Loaf", tags: ["Baking"], body }, author);
-		expect(text).toBe("bread loaf marc marc baking flour salt");
+	it("drops blank names, trims, and removes duplicates", () => {
+		const names = ingredientNamesOf({
+			steps: [],
+			ingredientGroups: [
+				{ id: "g1", name: "", ingredients: [
+					{ id: "a", amount: "", units: "", name: " Butter ", preparation: "" },
+					{ id: "b", amount: "", units: "", name: "", preparation: "" },
+				] },
+				{ id: "g2", name: "", ingredients: [
+					{ id: "c", amount: "", units: "", name: "Butter", preparation: "" },
+					{ id: "d", amount: "", units: "", name: "Sugar", preparation: "" },
+				] },
+			],
+		});
+		expect(names).toEqual(["Butter", "Sugar"]);
 	});
 
 	it("handles an empty body", () => {
-		const text = buildSearchText(
-			{ name: "Toast", tags: [], body: { ingredientGroups: [], steps: [] } },
-			author,
-		);
-		expect(text).toBe("toast marc marc");
+		expect(ingredientNamesOf({ ingredientGroups: [], steps: [] })).toEqual([]);
 	});
 });
 
@@ -87,7 +97,7 @@ describe("saveRecipe (database)", () => {
 			version: 1,
 			body,
 		});
-		expect(saved.search).toContain("flour");
+		expect(saved.ingredientNames).toEqual(["Flour", "Salt"]);
 	});
 
 	it("rejects a stale version and changes nothing", async () => {

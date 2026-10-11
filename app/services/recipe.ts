@@ -31,37 +31,13 @@ export function toSlug(name: string) {
 		.replace(/^-|-$/g, ""); // trim leading/trailing hyphens
 }
 
-export function buildSearchText(
-	recipe: { name: string; tags: string[]; body: RecipeBody.Body },
-	author: { name: string; handle: string },
-) {
-	const ingredientNames = recipe.body.ingredientGroups
+// Distinct, non-empty ingredient names, stored on the recipe so lists can filter without the body.
+export function ingredientNamesOf(body: RecipeBody.Body) {
+	const names = body.ingredientGroups
 		.flatMap((g) => g.ingredients)
-		.map((i) => i.name);
-
-	return [recipe.name, author.name, author.handle, ...recipe.tags, ...ingredientNames]
-		.join(" ")
-		.toLowerCase();
-}
-
-// Rewrites the search text of every recipe by an author, e.g. after a name change.
-export async function refreshAuthorSearch(userId: string) {
-	const author = await prisma.user.findUniqueOrThrow({
-		where: { id: userId },
-		select: { name: true, handle: true },
-	});
-	const recipes = await prisma.recipe.findMany({
-		where: { userId },
-		select: { id: true, name: true, tags: true, body: true },
-	});
-	await Promise.all(
-		recipes.map((r) =>
-			prisma.recipe.update({
-				where: { id: r.id },
-				data: { search: buildSearchText({ ...r, body: RecipeBody.Body.parse(r.body) }, author) },
-			}),
-		),
-	);
+		.map((i) => i.name.trim())
+		.filter(Boolean);
+	return [...new Set(names)];
 }
 
 export type SaveResult =
@@ -70,10 +46,6 @@ export type SaveResult =
 
 export async function saveRecipe(userId: string, input: Recipe.Save): Promise<SaveResult> {
 	const { id, version, ...fields } = input;
-	const author = await prisma.user.findUniqueOrThrow({
-		where: { id: userId },
-		select: { name: true, handle: true },
-	});
 	const slug = toSlug(fields.name) || `recipe-${id}`;
 
 	try {
@@ -82,7 +54,7 @@ export async function saveRecipe(userId: string, input: Recipe.Save): Promise<Sa
 			data: {
 				...fields,
 				slug,
-				search: buildSearchText(fields, author),
+				ingredientNames: ingredientNamesOf(fields.body),
 				version: { increment: 1 },
 			},
 		});

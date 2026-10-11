@@ -23,7 +23,7 @@ model Recipe {
   userId              String    
   user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   tags                String[]      @default([])
-  search              String        @default("")
+  ingredientNames     String[]      @default([])
   published           Boolean       @default(false)
   prepTime            Int           @default(15)
   cookTime            Int           @default(15)

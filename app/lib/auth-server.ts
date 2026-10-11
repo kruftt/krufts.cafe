@@ -1,7 +1,6 @@
 import { prisma } from "@lib/prisma";
 import { User } from "@schema";
 import { generateHandle } from "@services/user";
-import { refreshAuthorSearch } from "@services/recipe";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
@@ -31,11 +30,6 @@ export const auth = betterAuth({
 
 					const handle = await generateHandle(user.name);
 					return { data: { ...user, handle } };
-				},
-			},
-			update: {
-				after: async (user) => {
-					await refreshAuthorSearch(user.id);
 				},
 			},
 		},

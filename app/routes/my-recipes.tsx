@@ -2,7 +2,10 @@ import { Container, Header, Panel } from "@components/app";
 import { RecipeList } from "@components/recipe/list";
 import { requireAuth } from "@lib/auth-loader";
 import { findRecipes } from "@services/recipe";
+import { skipRevalidateOnQueryChange } from "@lib/revalidate";
 import type { Route } from "./+types/my-recipes";
+
+export const shouldRevalidate = skipRevalidateOnQueryChange;
 
 export async function loader({ request }: Route.LoaderArgs) {
 	const session = await requireAuth(request);
