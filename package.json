@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "react-router dev",
+    "dev": "bash run_dev_server.sh",
+    "dev:app": "react-router dev",
     "build": "react-router build",
     "start": "react-router-serve ./build/server/index.js"
   },
