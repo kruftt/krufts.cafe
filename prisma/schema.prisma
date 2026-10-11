@@ -29,7 +29,10 @@ model Recipe {
   cookTime            Int           @default(15)
   serves              String        @default("4")
   intro               String        @default("")
-  ingredientGroups    IngredientGroup[]   
+  body                Json          @default("{\"ingredientGroups\": [], \"steps\": []}")
+  version             Int           @default(0)
+  updatedAt           DateTime      @default(now()) @updatedAt
+  ingredientGroups    IngredientGroup[]
   steps               Step[]
   pins                Pin[]
   bookmarks           Bookmark[]
