@@ -29,28 +29,26 @@ export function Recipe({ recipe }: Props) {
 	const bookmarked = isBookmarked(recipe.id);
 
 	const [activeStepId, setActiveStepId] = useAtom(activeStepIdAtom);
-	const scrollNav = useScrollNavigation(recipe.steps);
+	const scrollNav = useScrollNavigation(recipe.body.steps);
 	const setParsedAmounts = useSetAtom(parsedAmountsAtom);
 	const [parsedServes, setParsedServes] = useAtom(parsedServesAtom);
 	useEffect(() => {
-		const amounts: Record<number, ReturnType<typeof parseAmount>> = {};
-		for (const group of recipe.ingredientGroups) {
+		const amounts: Record<string, ReturnType<typeof parseAmount>> = {};
+		for (const group of recipe.body.ingredientGroups) {
 			for (const ingredient of group.ingredients) {
-				if (ingredient.id !== undefined) {
-					amounts[ingredient.id] = parseAmount(ingredient.amount);
-				}
+				amounts[ingredient.id] = parseAmount(ingredient.amount);
 			}
 		}
 		setParsedAmounts(amounts);
 		setParsedServes(parseAmount(recipe.serves));
 		return () => { setParsedAmounts({}); setParsedServes(null); setActiveStepId(null); };
-	}, [recipe.ingredientGroups, recipe.serves, setParsedAmounts, setParsedServes, setActiveStepId]);
+	}, [recipe.body.ingredientGroups, recipe.serves, setParsedAmounts, setParsedServes, setActiveStepId]);
 
 	const [scale, setScale] = useState(1);
 
 	return (
 		<ScrollNavigationContext value={scrollNav}>
-			<StepBar steps={recipe.steps} />
+			<StepBar steps={recipe.body.steps} />
 			<Container>
 				<Header.Section>
 					<Header.Title>
@@ -143,8 +141,8 @@ export function Recipe({ recipe }: Props) {
 
 					<Panel.Item className="ingredient_groups">
 						{(() => {
-							const single = recipe.ingredientGroups.length === 1;
-							return recipe.ingredientGroups.map((group) => (
+							const single = recipe.body.ingredientGroups.length === 1;
+							return recipe.body.ingredientGroups.map((group) => (
 								<IngredientGroup
 									key={group.id}
 									group={group}
@@ -157,8 +155,8 @@ export function Recipe({ recipe }: Props) {
 				</Panel.Section>
 
 				{(() => {
-					const single = recipe.steps.length === 1;
-					return recipe.steps.map((step, i) => (
+					const single = recipe.body.steps.length === 1;
+					return recipe.body.steps.map((step, i) => (
 						<Step key={step.id} step={step} index={i + 1} single={single} />
 					));
 				})()}

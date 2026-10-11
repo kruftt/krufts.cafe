@@ -17,7 +17,7 @@ export function IngredientGroup({ group, scale, single }: Props) {
 		<div className={cn("ingredient_group", !single && "break-inside-avoid")}>
 			{!single && <h3 className="ingredient_group__name">{group.name}</h3>}
 			{group.ingredients.map((ingredient) => {
-				const parsed = ingredient.id !== undefined ? parsedAmounts[ingredient.id] : null;
+				const parsed = parsedAmounts[ingredient.id];
 				return (
 					<div key={ingredient.id} className="ingredient">
 						<span className="ingredient__amount mr-1">
