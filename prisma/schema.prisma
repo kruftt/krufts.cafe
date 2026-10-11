@@ -32,59 +32,11 @@ model Recipe {
   body                Json          @default("{\"ingredientGroups\": [], \"steps\": []}")
   version             Int           @default(0)
   updatedAt           DateTime      @default(now()) @updatedAt
-  ingredientGroups    IngredientGroup[]
-  steps               Step[]
   pins                Pin[]
   bookmarks           Bookmark[]
 
   @@map("recipe")
   @@unique([userId, slug])
-}
-
-model IngredientGroup {
-  id            Int             @id @default(autoincrement())
-  name          String          @default("")
-  index         Int
-  recipeId      Int
-  recipe        Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  ingredients   Ingredient[]
-
-  @@map("ingredient_group")
-}
-
-model Ingredient {
-  id            Int               @id @default(autoincrement())
-  amount        String            @default("")
-  units         String            @default("")
-  name          String            @default("")
-  preparation   String            @default("")
-  index         Int
-  groupId       Int
-  group         IngredientGroup   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-
-  @@map("ingredient")
-}
-
-model Step {
-  id            Int               @id @default(autoincrement())
-  name          String            @default("")
-  intro         String            @default("")
-  index         Int
-  recipeId      Int
-  recipe        Recipe            @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  instructions  Instruction[]
-
-  @@map("step")
-}
-
-model Instruction {
-  id            Int           @id @default(autoincrement())
-  text          String        @default("")
-  index         Int
-  stepId        Int
-  step          Step          @relation(fields: [stepId], references: [id], onDelete: Cascade)
-
-  @@map("instruction")
 }
 
 model Pin {
