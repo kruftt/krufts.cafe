@@ -17,6 +17,7 @@ import {
 import { useBookmarks } from "@hooks/bookmark";
 import { usePins } from "@hooks/pins";
 import { useUser } from "@hooks/session";
+import { recipeUrl } from "@lib/recipe-url";
 import { useTRPC } from "@lib/trpc";
 import { formatDuration } from "@lib/utils";
 import type { RecipeRowData } from "@services/recipe";
@@ -102,7 +103,7 @@ export function RecipeRow({ recipe }: { recipe: RecipeRowData }) {
 				variant="default"
 				render={
 					<Link
-						to={`/recipes/${recipe.user.handle}/${recipe.slug}`}
+						to={recipeUrl(recipe)}
 						tabIndex={0}
 					>
 						<ItemContent>

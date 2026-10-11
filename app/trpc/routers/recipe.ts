@@ -18,7 +18,6 @@ export const recipeRouter = router({
 		return prisma.recipe.create({
 			data: {
 				name,
-				slug: null,
 				userId: ctx.session.user.id,
 			},
 			select: { id: true },
@@ -28,7 +27,7 @@ export const recipeRouter = router({
 	save: authedProcedure.input(Recipe.Save).mutation(async ({ input, ctx }) => {
 		const result = await saveRecipe(ctx.session.user.id, input);
 		if (!result.ok) throw new TRPCError({ code: result.code, message: result.message });
-		return { version: result.version, slug: result.slug };
+		return { version: result.version };
 	}),
 
 	delete: authedProcedure.input(Model.Id).mutation(async ({ input, ctx }) => {

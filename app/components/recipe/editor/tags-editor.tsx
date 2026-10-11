@@ -2,37 +2,38 @@ import { Header } from "@components/app";
 import { InputEditor } from "@components/controls";
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
-import type { ProcedureOptions } from "@hooks/editor";
-import { useRecipeDraft } from "@hooks/recipe-draft";
+import { useRecipeDraft, useTags } from "@hooks/recipe-draft";
 import { Recipe } from "@schema";
 import { XIcon } from "lucide-react";
-import { useRef } from "react";
+import { useState } from "react";
 
 export function TagsEditor() {
-	const { draft, setTags } = useRecipeDraft();
-	const tags = draft.tags;
-	const inputRef = useRef<HTMLInputElement>(null);
+	const { setTags } = useRecipeDraft();
+	const tags = useTags();
+	// The new-tag input is an add form, not draft data, so it keeps its own text.
+	const [text, setText] = useState("");
+	const [error, setError] = useState("");
 
-	function createTag(tag: string, options: ProcedureOptions) {
+	function createTag() {
+		const tag = text.trim();
 		if (tag === "") {
-			options.onError({ message: "Please enter a tag." });
+			setError("Please enter a tag.");
 			return;
 		}
 
 		if (tags.includes(tag)) {
-			options.onError({ message: "Tag already exists." });
+			setError("Tag already exists.");
 			return;
 		}
 
 		const next = Recipe.Fields.shape.tags.safeParse([...tags, tag]);
 		if (!next.success) {
-			options.onError({ message: tags.length >= 20 ? "Too many tags." : "Tag is too long." });
+			setError(tags.length >= 20 ? "Too many tags." : "Tag is too long.");
 			return;
 		}
 
 		setTags(next.data);
-		options.onSuccess();
-		setTimeout(() => inputRef.current?.focus());
+		setText("");
 	}
 
 	function removeTag(index: number) {
@@ -56,11 +57,21 @@ export function TagsEditor() {
 			))}
 			<div className="basis-1/1">
 				<InputEditor
-					ref={inputRef}
 					className="text-center w-60 m-auto"
-					onSave={createTag}
+					value={text}
+					error={error}
+					onChange={(v) => {
+						setText(v);
+						setError("");
+					}}
+					onKeyDown={(e) => {
+						if (e.key === "Enter") createTag();
+					}}
+					onBlur={() => {
+						if (text.trim()) createTag();
+						else setError("");
+					}}
 					placeholder="Add new tag..."
-					clear
 				/>
 			</div>
 		</Header.Item>

@@ -1,26 +1,14 @@
-import { type ProcedureOptions, useEditor } from "@hooks";
 import { cn } from "@lib/utils";
 
-interface Props extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-	onSave: (v: string, options: ProcedureOptions) => void;
+interface Props extends Omit<React.ComponentProps<"textarea">, "value" | "onChange"> {
+	value: string;
+	onChange: (value: string) => void;
+	error?: string;
 	resize?: boolean;
 	styles?: string;
 }
 
-export function TextareaEditor ({
-	className,
-	onSave,
-	resize,
-	styles,
-	value: initialValue,
-	...rest
-}: Props) {
-	const { value, busy, error, onKeyDown, onChange, onBlur } = useEditor(
-		initialValue?.toString() || "",
-		onSave,
-		{ ctrl: true },
-	);
-
+export function TextareaEditor({ className, value, onChange, error, resize, styles, ...rest }: Props) {
 	return (
 		<div
 			className={cn(
@@ -36,10 +24,7 @@ export function TextareaEditor ({
 					styles,
 				)}
 				value={value}
-				disabled={busy}
-				onBlur={onBlur}
-				onChange={onChange}
-				onKeyDown={onKeyDown}
+				onChange={(e) => onChange(e.currentTarget.value)}
 				aria-invalid={!!error}
 				{...rest}
 			/>

@@ -22,15 +22,6 @@ export async function newRecipeName(userId: string) {
 	return `${base} (${(numbers.length ? Math.max(...numbers) : 0) + 1})`;
 }
 
-export function toSlug(name: string) {
-	return name
-		.normalize("NFD") // decompose "é" into "e" + combining accent
-		.replace(/\p{M}/gu, "") // strip combining marks (the accents)
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, "-") // replace non-alphanumeric runs with hyphens
-		.replace(/^-|-$/g, ""); // trim leading/trailing hyphens
-}
-
 // Distinct, non-empty ingredient names, stored on the recipe so lists can filter without the body.
 export function ingredientNamesOf(body: RecipeBody.Body) {
 	const names = body.ingredientGroups
@@ -41,29 +32,21 @@ export function ingredientNamesOf(body: RecipeBody.Body) {
 }
 
 export type SaveResult =
-	| { ok: true; version: number; slug: string }
-	| { ok: false; code: "NOT_FOUND" | "FORBIDDEN" | "CONFLICT" | "BAD_REQUEST"; message?: string };
+	| { ok: true; version: number }
+	| { ok: false; code: "NOT_FOUND" | "FORBIDDEN" | "CONFLICT"; message?: string };
 
 export async function saveRecipe(userId: string, input: Recipe.Save): Promise<SaveResult> {
 	const { id, version, ...fields } = input;
-	const slug = toSlug(fields.name) || `recipe-${id}`;
 
-	try {
-		const { count } = await prisma.recipe.updateMany({
-			where: { id, userId, version },
-			data: {
-				...fields,
-				slug,
-				ingredientNames: ingredientNamesOf(fields.body),
-				version: { increment: 1 },
-			},
-		});
-		if (count === 1) return { ok: true, version: version + 1, slug };
-	} catch (e) {
-		if ((e as { code?: string }).code === "P2002")
-			return { ok: false, code: "BAD_REQUEST", message: "You already have a recipe with this name." };
-		throw e;
-	}
+	const { count } = await prisma.recipe.updateMany({
+		where: { id, userId, version },
+		data: {
+			...fields,
+			ingredientNames: ingredientNamesOf(fields.body),
+			version: { increment: 1 },
+		},
+	});
+	if (count === 1) return { ok: true, version: version + 1 };
 
 	const existing = await prisma.recipe.findUnique({ where: { id }, select: { userId: true } });
 	if (!existing) return { ok: false, code: "NOT_FOUND" };
@@ -71,18 +54,11 @@ export async function saveRecipe(userId: string, input: Recipe.Save): Promise<Sa
 	return { ok: false, code: "CONFLICT", message: "This recipe was changed elsewhere." };
 }
 
-interface IdSlugLocator {
-	userId_slug: {
-		userId: string;
-		slug: string;
-	};
-}
-
 interface RecipeIdLocator {
 	id: number;
 }
 
-export async function findRecipe(where: IdSlugLocator | RecipeIdLocator) {
+export async function findRecipe(where: RecipeIdLocator) {
 	const recipe = await prisma.recipe.findUnique({
 		where,
 		include: {

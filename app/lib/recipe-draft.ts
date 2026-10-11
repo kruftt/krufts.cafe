@@ -1,26 +1,28 @@
-import type { ProcedureOptions } from "@hooks/editor";
-import type { Recipe, RecipeBody } from "@schema";
-import type * as z from "zod";
+import { Recipe, RecipeBody } from "@schema";
+import * as z from "zod";
 
-export type Draft = Recipe.Fields & { body: RecipeBody.Body };
+// The editor's form state: every editable value exactly as typed. Times stay strings until save.
+export type Draft = Omit<Recipe.Fields, "prepTime" | "cookTime"> & {
+	prepTime: string;
+	cookTime: string;
+	body: RecipeBody.Body;
+};
 
-export type FieldSaver = (value: string, options: ProcedureOptions) => void;
+export type DraftValues = Recipe.Fields & { body: RecipeBody.Body };
 
-// Validates one field with its zod schema, then applies it to the draft.
-export function fieldSaver<T>(
-	schema: z.ZodType<T>,
-	update: (fn: (d: Draft) => Draft) => void,
-	apply: (draft: Draft, value: T) => Draft,
-): FieldSaver {
-	return (value, options) => {
-		const result = schema.safeParse(value);
-		if (!result.success) {
-			options.onError(result.error.issues[0] ?? { message: "Invalid value" });
-			return;
-		}
-		update((d) => apply(d, result.data));
-		options.onSuccess();
-	};
+const Minutes = z.string().regex(/^\d+$/, "Whole minutes only.");
+const DraftValues = Recipe.Fields.extend({ body: RecipeBody.Body });
+
+// Validates the whole draft and converts it to saveable values.
+export function parseDraft(draft: Draft): { ok: true; value: DraftValues } | { ok: false; message: string } {
+	const result = DraftValues.safeParse({
+		...draft,
+		prepTime: Minutes.safeParse(draft.prepTime).success ? Number(draft.prepTime) : Number.NaN,
+		cookTime: Minutes.safeParse(draft.cookTime).success ? Number(draft.cookTime) : Number.NaN,
+	});
+	// zod paths like body.ingredientGroups.0.ingredients.2.amount aren't readable; fields show their own errors.
+	if (!result.success) return { ok: false, message: "Can't save until invalid fields are fixed." };
+	return { ok: true, value: result.data };
 }
 
 type GroupFields = Omit<RecipeBody.IngredientGroup, "id" | "ingredients">;
@@ -51,14 +53,114 @@ function removeById<T extends { id: string }>(items: T[], id: string) {
 	return next.length === items.length ? items : next;
 }
 
-export function fromRecipe(recipe: Draft): Draft {
+export function fromRecipe(recipe: DraftValues): Draft {
 	const { name, tags, published, prepTime, cookTime, serves, intro, body } = recipe;
-	return { name, tags, published, prepTime, cookTime, serves, intro, body };
+	return { name, tags, published, prepTime: String(prepTime), cookTime: String(cookTime), serves, intro, body };
 }
 
-export function setField<K extends keyof Recipe.Fields>(draft: Draft, field: K, value: Recipe.Fields[K]): Draft {
+type TopFields = Omit<Draft, "body">;
+
+export function setField<K extends keyof TopFields>(draft: Draft, field: K, value: TopFields[K]): Draft {
 	return draft[field] === value ? draft : { ...draft, [field]: value };
 }
+
+// Lookups
+
+function findGroup(draft: Draft, id: string) {
+	return draft.body.ingredientGroups.find((g) => g.id === id);
+}
+
+function findIngredient(draft: Draft, id: string) {
+	for (const group of draft.body.ingredientGroups) {
+		const ingredient = group.ingredients.find((i) => i.id === id);
+		if (ingredient) return ingredient;
+	}
+}
+
+function findStep(draft: Draft, id: string) {
+	return draft.body.steps.find((s) => s.id === id);
+}
+
+function findInstruction(draft: Draft, id: string) {
+	for (const step of draft.body.steps) {
+		const instruction = step.instructions.find((i) => i.id === id);
+		if (instruction) return instruction;
+	}
+}
+
+export function groupIds(draft: Draft) {
+	return draft.body.ingredientGroups.map((g) => g.id);
+}
+
+export function ingredientIds(draft: Draft, groupId: string) {
+	return findGroup(draft, groupId)?.ingredients.map((i) => i.id) ?? [];
+}
+
+export function stepIds(draft: Draft) {
+	return draft.body.steps.map((s) => s.id);
+}
+
+export function instructionIds(draft: Draft, stepId: string) {
+	return findStep(draft, stepId)?.instructions.map((i) => i.id) ?? [];
+}
+
+export function sameIds(a: string[], b: string[]) {
+	return a.length === b.length && a.every((id, i) => id === b[i]);
+}
+
+// Editable string fields. `key` identifies the field stably, for memoizing subscriptions.
+// `get` returns "" for a missing item: one may be read in the render just before its parent drops it.
+
+export interface DraftField {
+	key: string;
+	get: (draft: Draft) => string;
+	set: (draft: Draft, value: string) => Draft;
+	schema: z.ZodType<string>;
+}
+
+export const Field = {
+	recipe(name: "name" | "prepTime" | "cookTime" | "serves" | "intro"): DraftField {
+		const schema = name === "prepTime" || name === "cookTime" ? Minutes : Recipe.Fields.shape[name];
+		return {
+			key: `recipe:${name}`,
+			get: (d) => d[name],
+			set: (d, v) => setField(d, name, v),
+			schema,
+		};
+	},
+	group(id: string, name: "name"): DraftField {
+		return {
+			key: `group:${id}:${name}`,
+			get: (d) => findGroup(d, id)?.[name] ?? "",
+			set: (d, v) => updateGroup(d, id, { [name]: v }),
+			schema: RecipeBody.IngredientGroup.shape[name],
+		};
+	},
+	ingredient(id: string, name: "amount" | "units" | "name" | "preparation"): DraftField {
+		return {
+			key: `ingredient:${id}:${name}`,
+			get: (d) => findIngredient(d, id)?.[name] ?? "",
+			set: (d, v) => updateIngredient(d, id, { [name]: v }),
+			schema: RecipeBody.Ingredient.shape[name] as z.ZodType<string>,
+		};
+	},
+	step(id: string, name: "name" | "intro"): DraftField {
+		return {
+			key: `step:${id}:${name}`,
+			get: (d) => findStep(d, id)?.[name] ?? "",
+			set: (d, v) => updateStep(d, id, { [name]: v }),
+			schema: RecipeBody.Step.shape[name],
+		};
+	},
+	instruction(id: string, name: "text"): DraftField {
+		return {
+			key: `instruction:${id}:${name}`,
+			get: (d) => findInstruction(d, id)?.[name] ?? "",
+			set: (d, v) => updateInstruction(d, id, { [name]: v }),
+			schema: RecipeBody.Instruction.shape[name],
+		};
+	},
+};
 
 // Ingredient groups
 

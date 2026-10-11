@@ -1,6 +1,7 @@
 import { pinnedRecipesAtom } from "@atoms/user";
 import { buttonVariants } from "@components/ui/button";
 import { usePins } from "@hooks/pins";
+import { recipeUrl } from "@lib/recipe-url";
 import { useAtomValue } from "jotai";
 import { PinIcon, XIcon } from "lucide-react";
 import { Link } from "react-router";
@@ -28,7 +29,7 @@ export function PinBar() {
 							>
 								<XIcon size={12} />
 							</button>
-							<Link className="overflow-hidden" to={`/recipes/${recipe.user.handle}/${recipe.slug}`}>
+							<Link className="overflow-hidden" to={recipeUrl(recipe)}>
 								{recipe.name}
 							</Link>
 						</div>

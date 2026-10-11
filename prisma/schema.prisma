@@ -18,8 +18,7 @@ datasource db {
 
 model Recipe {
   id                  Int           @id @default(autoincrement())
-  name                String    
-  slug                String?   
+  name                String
   userId              String    
   user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   tags                String[]      @default([])
@@ -36,7 +35,6 @@ model Recipe {
   bookmarks           Bookmark[]
 
   @@map("recipe")
-  @@unique([userId, slug])
 }
 
 model Pin {

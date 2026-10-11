@@ -6,7 +6,7 @@ export const Name = z
 	.string()
 	.min(1)
 	.max(64)
-	.regex(/^[\p{L}\p{N} '\-&,]+$/u, { error: "Invalid characters." });
+	.regex(/^[\p{L}\p{N} '\-&,()]+$/u, { error: "Invalid characters." });
 
 
 export type Fields = z.infer<typeof Fields>;

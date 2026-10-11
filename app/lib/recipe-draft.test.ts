@@ -1,5 +1,4 @@
-import { describe, expect, it, mock } from "bun:test";
-import { RecipeBody } from "@schema";
+import { describe, expect, it } from "bun:test";
 import * as Ops from "./recipe-draft";
 import type { Draft } from "./recipe-draft";
 
@@ -7,8 +6,8 @@ const base: Draft = {
 	name: "Soup",
 	tags: [],
 	published: false,
-	prepTime: 5,
-	cookTime: 20,
+	prepTime: "5",
+	cookTime: "20",
 	serves: "2",
 	intro: "",
 	body: {
@@ -121,24 +120,73 @@ describe("unknown ids and immutability", () => {
 	});
 });
 
-describe("fieldSaver", () => {
-	it("rejects an invalid amount and leaves the draft unchanged", () => {
-		let draft = base;
-		const update = (fn: (d: Draft) => Draft) => {
-			draft = fn(draft);
-		};
-		const options = { onError: mock(), onSuccess: mock() };
-		const save = Ops.fieldSaver(RecipeBody.Ingredient.shape.amount, update, (d, v) =>
-			Ops.updateIngredient(d, "i1", { amount: v }),
-		);
+describe("Field", () => {
+	it("reads and writes each kind of field", () => {
+		const fields = [
+			Ops.Field.recipe("name"),
+			Ops.Field.recipe("prepTime"),
+			Ops.Field.group("g1", "name"),
+			Ops.Field.ingredient("i2", "preparation"),
+			Ops.Field.step("s2", "intro"),
+			Ops.Field.instruction("n1", "text"),
+		];
+		for (const field of fields) {
+			const next = field.set(base, "7");
+			expect(field.get(next)).toBe("7");
+			expect(field.get(base)).not.toBe("7");
+		}
+	});
 
-		save("lots", options);
-		expect(options.onError).toHaveBeenCalledTimes(1);
-		expect(options.onSuccess).not.toHaveBeenCalled();
-		expect(draft).toBe(base);
+	it("returns an empty string for a missing item and leaves the draft unchanged on set", () => {
+		const field = Ops.Field.ingredient("nope", "name");
+		expect(field.get(base)).toBe("");
+		expect(field.set(base, "x")).toBe(base);
+	});
 
-		save("1/2", options);
-		expect(options.onSuccess).toHaveBeenCalledTimes(1);
-		expect(draft.body.ingredientGroups[0]?.ingredients[0]?.amount).toBe("1/2");
+	it("validates with the field's schema", () => {
+		expect(Ops.Field.ingredient("i1", "amount").schema.safeParse("lots").success).toBe(false);
+		expect(Ops.Field.ingredient("i1", "amount").schema.safeParse("1/2").success).toBe(true);
+		expect(Ops.Field.recipe("cookTime").schema.safeParse("").success).toBe(false);
+	});
+
+	it("has keys that differ per item and field", () => {
+		expect(Ops.Field.ingredient("i1", "name").key).not.toBe(Ops.Field.ingredient("i2", "name").key);
+		expect(Ops.Field.ingredient("i1", "name").key).not.toBe(Ops.Field.ingredient("i1", "units").key);
+	});
+});
+
+describe("parseDraft", () => {
+	it("converts times to numbers", () => {
+		const result = Ops.parseDraft(base);
+		expect(result).toMatchObject({ ok: true, value: { prepTime: 5, cookTime: 20 } });
+	});
+
+	it("rejects an empty name", () => {
+		expect(Ops.parseDraft({ ...base, name: "" }).ok).toBe(false);
+	});
+
+	it("rejects empty or non-numeric times instead of coercing them", () => {
+		expect(Ops.parseDraft({ ...base, prepTime: "" }).ok).toBe(false);
+		expect(Ops.parseDraft({ ...base, prepTime: "1a" }).ok).toBe(false);
+	});
+
+	it("rejects an invalid body value", () => {
+		expect(Ops.parseDraft(Ops.updateIngredient(base, "i1", { amount: "lots" })).ok).toBe(false);
+	});
+});
+
+describe("ids", () => {
+	it("lists ids in order", () => {
+		expect(Ops.groupIds(base)).toEqual(["g1", "g2"]);
+		expect(Ops.ingredientIds(base, "g1")).toEqual(["i1", "i2"]);
+		expect(Ops.ingredientIds(base, "nope")).toEqual([]);
+		expect(Ops.stepIds(base)).toEqual(["s1", "s2"]);
+		expect(Ops.instructionIds(base, "s2")).toEqual(["n2"]);
+	});
+
+	it("compares id lists by value", () => {
+		expect(Ops.sameIds(["a", "b"], ["a", "b"])).toBe(true);
+		expect(Ops.sameIds(["a", "b"], ["b", "a"])).toBe(false);
+		expect(Ops.sameIds(["a"], ["a", "b"])).toBe(false);
 	});
 });

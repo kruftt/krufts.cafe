@@ -2,15 +2,16 @@ import { parsedAmountsAtom, parsedServesAtom } from "@atoms/amount";
 import { activeStepIdAtom } from "@atoms/recipe";
 import { Container, Header, Panel } from "@components/app";
 import { Badge } from "@components/ui/badge";
-import { Button } from "@components/ui/button";
+import { Button, buttonVariants } from "@components/ui/button";
 import { useBookmarks, usePins, useUser } from "@hooks";
 import { ScrollNavigationContext, useScrollNavigation } from "@hooks/scroll-navigation";
 import { parseAmount } from "@lib/amount";
 import { formatDuration } from "@lib/utils";
 import type { RecipeData } from "@services/recipe";
 import { useAtom, useSetAtom } from "jotai";
-import { BookmarkIcon, PinIcon } from "lucide-react";
+import { BookmarkIcon, PencilIcon, PinIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { IngredientGroup } from "./ingredient-group";
 import { Step } from "./step";
 import { StepBar } from "./step-bar";
@@ -20,7 +21,9 @@ interface Props extends React.ComponentProps<"div"> {
 }
 
 export function Recipe({ recipe }: Props) {
-	const loggedIn = useUser() != null;
+	const user = useUser();
+	const loggedIn = user != null;
+	const isAuthor = user?.id === recipe.userId;
 
 	const { isPinned, togglePin } = usePins();
 	const pinned = isPinned(recipe.id);
@@ -51,6 +54,21 @@ export function Recipe({ recipe }: Props) {
 			<StepBar steps={recipe.body.steps} />
 			<Container>
 				<Header.Section>
+					{isAuthor && (
+						<Header.Item>
+							<div className="flex gap-1 justify-center">
+								<Link
+									tabIndex={0}
+									to={`/edit/${recipe.id}`}
+									className={buttonVariants({ variant: "outline", size: "sm" })}
+								>
+									<PencilIcon />
+									Edit
+								</Link>
+							</div>
+						</Header.Item>
+					)}
+
 					<Header.Title>
 						<h2 className="recipe__title">{recipe.name}</h2>
 						<div className="recipe__author">By {recipe.user.name}</div>

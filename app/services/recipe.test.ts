@@ -83,12 +83,11 @@ describe("saveRecipe (database)", () => {
 
 	it("saves every field with the current version", async () => {
 		const result = await saveRecipe(ownerId, payload());
-		expect(result).toEqual({ ok: true, version: 1, slug: "test-bread" });
+		expect(result).toEqual({ ok: true, version: 1 });
 
 		const saved = await prisma.recipe.findUniqueOrThrow({ where: { id: recipeId } });
 		expect(saved).toMatchObject({
 			name: "Test Bread",
-			slug: "test-bread",
 			tags: ["baking"],
 			prepTime: 10,
 			cookTime: 30,
@@ -123,14 +122,10 @@ describe("saveRecipe (database)", () => {
 		expect(result).toMatchObject({ ok: false, code: "NOT_FOUND" });
 	});
 
-	it("rejects a name whose slug the author already uses", async () => {
-		await prisma.recipe.create({ data: { name: "Taken", slug: "taken", userId: ownerId } });
+	it("allows a name the author already uses", async () => {
+		await prisma.recipe.create({ data: { name: "Taken", userId: ownerId } });
 		const result = await saveRecipe(ownerId, payload({ name: "Taken" }));
-		expect(result).toMatchObject({ ok: false, code: "BAD_REQUEST" });
-
-		const saved = await prisma.recipe.findUniqueOrThrow({ where: { id: recipeId } });
-		expect(saved.name).toBe("Draft");
-		expect(saved.version).toBe(0);
+		expect(result).toMatchObject({ ok: true });
 	});
 
 	it("list queries omit the body", async () => {

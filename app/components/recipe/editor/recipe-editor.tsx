@@ -1,16 +1,22 @@
 import { Container, Header, Panel } from "@components/app";
-import { InputEditor, TextareaEditor } from "@components/controls";
 import { Button, buttonVariants } from "@components/ui/button";
-import { useRecipeDraft } from "@hooks/recipe-draft";
+import { useFieldValue, useGroupIds, usePublished, useRecipeDraft, useStepIds } from "@hooks/recipe-draft";
+import { Field } from "@lib/recipe-draft";
+import { recipeUrl } from "@lib/recipe-url";
 import { CheckSquareIcon, LinkIcon, PlusIcon, SquareIcon } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { DraftInput, DraftTextarea } from "./draft-field";
 import { IngredientGroupEditor } from "./ingredient-group-editor";
 import { SaveStatus } from "./save-status";
 import { StepEditor } from "./step-editor";
 import { TagsEditor } from "./tags-editor";
 
+// RecipeEditor subscribes only to the group and step id lists. Anything that reads other draft
+// values lives in its own component below, so typing never re-renders the whole editor.
 export function RecipeEditor() {
-	const { recipe, draft, saveRecipeField, setPublished, addGroup, addStep } = useRecipeDraft();
+	const { recipe, addGroup, addStep } = useRecipeDraft();
+	const groupIds = useGroupIds();
+	const stepIds = useStepIds();
 
 	function createIngredientGroup() {
 		addGroup();
@@ -43,32 +49,8 @@ export function RecipeEditor() {
 			<Header.Section>
 				<Header.Item>
 					<div className="flex gap-1 justify-center">
-						<Button
-							aria-label="Toggle published"
-							size="sm"
-							variant="outline"
-							onClick={() => setPublished(!draft.published)}
-						>
-							{draft.published ? (
-								<>
-									<CheckSquareIcon />
-									Published
-								</>
-							) : (
-								<>
-									<SquareIcon />
-									Unpublished
-								</>
-							)}
-						</Button>
-						<Link
-							tabIndex={0}
-							to={`/recipes/${recipe.user.handle}/${recipe.slug}`}
-							className={`${buttonVariants({ variant: "outline", size: "sm" })}`}
-						>
-							<LinkIcon />
-							Live
-						</Link>
+						<PublishToggle />
+						<LiveLink />
 					</div>
 				</Header.Item>
 
@@ -77,11 +59,10 @@ export function RecipeEditor() {
 				</Header.Item>
 
 				<Header.Title>
-					<InputEditor
-						value={draft.name}
+					<DraftInput
+						field={Field.recipe("name")}
 						className="recipe__title"
 						inputStyle="rounded-2xl"
-						onSave={saveRecipeField("name")}
 					/>
 					<div className="recipe__author">By {recipe.user.name}</div>
 				</Header.Title>
@@ -92,11 +73,7 @@ export function RecipeEditor() {
 					<div>
 						<div className="recipe__duration_title">Prep</div>
 						<div className="recipe__duration_entry">
-							<InputEditor
-								onSave={saveRecipeField("prepTime")}
-								value={draft.prepTime}
-								resize
-							/>
+							<DraftInput field={Field.recipe("prepTime")} resize />
 							<span>min</span>
 						</div>
 					</div>
@@ -104,11 +81,7 @@ export function RecipeEditor() {
 					<div>
 						<div className="recipe__duration_title">Cook</div>
 						<div className="recipe__duration_entry">
-							<InputEditor
-								onSave={saveRecipeField("cookTime")}
-								value={draft.cookTime}
-								resize
-							/>
+							<DraftInput field={Field.recipe("cookTime")} resize />
 							<span>min</span>
 						</div>
 					</div>
@@ -116,17 +89,16 @@ export function RecipeEditor() {
 					<div>
 						<div className="recipe__duration_title">Total</div>
 						<div className="recipe__duration_entry">
-							{`${draft.prepTime + draft.cookTime} min`}
+							<TotalTime />
 						</div>
 					</div>
 				</Header.Item>
 
 				<Header.Item className="recipe__serves">
 					Serves
-					<InputEditor
+					<DraftInput
 						className="font-bold ml-1"
-						onSave={saveRecipeField("serves")}
-						value={draft.serves}
+						field={Field.recipe("serves")}
 						resize
 					/>
 				</Header.Item>
@@ -134,11 +106,10 @@ export function RecipeEditor() {
 
 			<Panel.Section>
 				<Panel.Item>
-					<TextareaEditor
+					<DraftTextarea
 						className="recipe__intro"
-						onSave={saveRecipeField("intro")}
+						field={Field.recipe("intro")}
 						placeholder="Recipe Introduction (optional)..."
-						value={draft.intro}
 					/>
 				</Panel.Item>
 			</Panel.Section>
@@ -149,8 +120,8 @@ export function RecipeEditor() {
 				</Panel.Title>
 
 				<Panel.Item className="ingredient_groups">
-					{draft.body.ingredientGroups.map((group) => (
-						<IngredientGroupEditor key={group.id} group={group} />
+					{groupIds.map((id) => (
+						<IngredientGroupEditor key={id} groupId={id} />
 					))}
 				</Panel.Item>
 
@@ -162,8 +133,8 @@ export function RecipeEditor() {
 				</Panel.Item>
 			</Panel.Section>
 
-			{draft.body.steps.map((step, i) => (
-				<StepEditor key={step.id} index={i + 1} step={step} />
+			{stepIds.map((id, i) => (
+				<StepEditor key={id} index={i + 1} stepId={id} />
 			))}
 
 			<div className="w-1/1 mt-6 text-center">
@@ -175,4 +146,59 @@ export function RecipeEditor() {
 			<div className="h-screen" />
 		</Container>
 	);
+}
+
+function PublishToggle() {
+	const { setPublished } = useRecipeDraft();
+	const published = usePublished();
+
+	return (
+		<Button
+			aria-label="Toggle published"
+			size="sm"
+			variant="outline"
+			onClick={() => setPublished(!published)}
+		>
+			{published ? (
+				<>
+					<CheckSquareIcon />
+					Published
+				</>
+			) : (
+				<>
+					<SquareIcon />
+					Unpublished
+				</>
+			)}
+		</Button>
+	);
+}
+
+function LiveLink() {
+	const { recipe, saveNow } = useRecipeDraft();
+	const navigate = useNavigate();
+	const url = recipeUrl({ id: recipe.id, name: useFieldValue(Field.recipe("name")) });
+
+	return (
+		<Link
+			tabIndex={0}
+			to={url}
+			onClick={async (e) => {
+				// Save first so the view's loader doesn't read a stale recipe.
+				if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+				e.preventDefault();
+				if (await saveNow()) navigate(url);
+			}}
+			className={buttonVariants({ variant: "outline", size: "sm" })}
+		>
+			<LinkIcon />
+			Live
+		</Link>
+	);
+}
+
+function TotalTime() {
+	const prep = Number(useFieldValue(Field.recipe("prepTime"))) || 0;
+	const cook = Number(useFieldValue(Field.recipe("cookTime"))) || 0;
+	return `${prep + cook} min`;
 }

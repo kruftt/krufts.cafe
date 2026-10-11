@@ -33,7 +33,6 @@ export async function getPins(userId: string) {
         select: {
           id: true,
           name: true,
-          slug: true,
           user: { select: { handle: true } },
         },
       },

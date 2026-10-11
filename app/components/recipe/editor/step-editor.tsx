@@ -1,27 +1,27 @@
 import { Panel } from "@components/app";
-import {
-	DeletionDialog,
-	InputEditor,
-	TextareaEditor,
-} from "@components/controls";
+import { DeletionDialog } from "@components/controls";
 import { Button } from "@components/ui/button";
-import { useRecipeDraft } from "@hooks/recipe-draft";
-import type { RecipeBody } from "@schema";
+import { useFieldValue, useInstructionIds, useRecipeDraft } from "@hooks/recipe-draft";
+import { Field } from "@lib/recipe-draft";
 import { PlusIcon, XIcon } from "lucide-react";
-import { useRef } from "react";
+import { memo, useRef } from "react";
+import { DraftInput, DraftTextarea } from "./draft-field";
 import { InstructionEditor } from "./instruction-editor";
 
 interface Props {
 	index: number;
-	step: RecipeBody.Step;
+	stepId: string;
 }
 
-export function StepEditor({ step, index }: Props) {
+export const StepEditor = memo(function StepEditor({ stepId, index }: Props) {
 	const instructionsRef = useRef<HTMLDivElement>(null);
-	const { saveStepField, removeStep, addInstruction } = useRecipeDraft();
+	const { removeStep, addInstruction } = useRecipeDraft();
+	const nameField = Field.step(stepId, "name");
+	const name = useFieldValue(nameField);
+	const instructionIds = useInstructionIds(stepId);
 
 	function createInstruction() {
-		addInstruction(step.id);
+		addInstruction(stepId);
 		requestAnimationFrame(() => requestAnimationFrame(() => {
 			const el = instructionsRef.current;
 			if (!el) return;
@@ -36,8 +36,8 @@ export function StepEditor({ step, index }: Props) {
 			<DeletionDialog
 				title="Delete Step"
 				message="Are you sure you want to delete this step?"
-				item={step.name}
-				onConfirm={() => removeStep(step.id)}
+				item={name}
+				onConfirm={() => removeStep(stepId)}
 			>
 				<Button variant="ghost" className="absolute z-10 top-4 right-4">
 					<XIcon color="red" className="size-7" />
@@ -46,29 +46,27 @@ export function StepEditor({ step, index }: Props) {
 
 			<Panel.Title>
 				<span className="panel__index">{index}.</span>
-				<InputEditor
+				<DraftInput
 					className="grow"
 					placeholder="Step Name"
-					onSave={saveStepField(step.id, "name")}
-					value={step.name}
+					field={nameField}
 				/>
 			</Panel.Title>
 
 			<Panel.Item>
-				<TextareaEditor
-					value={step.intro}
+				<DraftTextarea
 					className="step__intro"
 					placeholder="Step overview (optional)..."
-					onSave={saveStepField(step.id, "intro")}
+					field={Field.step(stepId, "intro")}
 				/>
 			</Panel.Item>
 
 			<Panel.Item ref={instructionsRef}>
-				{step.instructions.map((instruction, i) => (
+				{instructionIds.map((id, i) => (
 					<InstructionEditor
-						key={instruction.id}
+						key={id}
 						index={i + 1}
-						instruction={instruction}
+						instructionId={id}
 					/>
 				))}
 
@@ -84,4 +82,4 @@ export function StepEditor({ step, index }: Props) {
 			</Panel.Item>
 		</Panel.Section>
 	);
-}
+});
