@@ -6,11 +6,12 @@ import { Button, buttonVariants } from "@components/ui/button";
 import { useBookmarks, usePins, useUser } from "@hooks";
 import { ScrollNavigationContext, useScrollNavigation } from "@hooks/scroll-navigation";
 import { parseAmount } from "@lib/amount";
+import { ingredientMap } from "@lib/ingredient-ref";
 import { formatDuration } from "@lib/utils";
 import type { RecipeData } from "@services/recipe";
 import { useAtom, useSetAtom } from "jotai";
 import { BookmarkIcon, PencilIcon, PinIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { IngredientGroup } from "./ingredient-group";
 import { Step } from "./step";
@@ -48,6 +49,7 @@ export function Recipe({ recipe }: Props) {
 	}, [recipe.body.ingredientGroups, recipe.serves, setParsedAmounts, setParsedServes, setActiveStepId]);
 
 	const [scale, setScale] = useState(1);
+	const ingredients = useMemo(() => ingredientMap(recipe.body.ingredientGroups), [recipe.body.ingredientGroups]);
 
 	return (
 		<ScrollNavigationContext value={scrollNav}>
@@ -175,7 +177,14 @@ export function Recipe({ recipe }: Props) {
 				{(() => {
 					const single = recipe.body.steps.length === 1;
 					return recipe.body.steps.map((step, i) => (
-						<Step key={step.id} step={step} index={i + 1} single={single} />
+						<Step
+							key={step.id}
+							step={step}
+							index={i + 1}
+							single={single}
+							ingredients={ingredients}
+							scale={scale}
+						/>
 					));
 				})()}
 			</Container>

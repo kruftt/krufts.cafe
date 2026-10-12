@@ -91,6 +91,10 @@ export function useInstructionIds(stepId: string) {
 	return useDraftSelect((d) => Ops.instructionIds(d, stepId), [stepId], Ops.sameIds);
 }
 
+export function useIngredientGroups() {
+	return useDraftSelect((d) => d.body.ingredientGroups, []);
+}
+
 export function useTags() {
 	return useDraftSelect((d) => d.tags, []);
 }

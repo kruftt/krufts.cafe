@@ -3,7 +3,7 @@ import { useRecipeDraft } from "@hooks/recipe-draft";
 import { Field } from "@lib/recipe-draft";
 import { XIcon } from "lucide-react";
 import { memo } from "react";
-import { DraftTextarea } from "./draft-field";
+import { InstructionTextarea } from "./instruction-textarea";
 
 interface Props {
 	index: number;
@@ -24,9 +24,9 @@ export const InstructionEditor = memo(function InstructionEditor({ index, instru
 			</Button>
 			<div className="instruction">
 				<span className="">{index}.</span>
-				<DraftTextarea
+				<InstructionTextarea
 					field={Field.instruction(instructionId, "text")}
-					placeholder="Insert instruction here"
+					placeholder="Insert instruction here (@ adds an ingredient)"
 				/>
 			</div>
 		</div>

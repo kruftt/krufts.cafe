@@ -34,6 +34,15 @@ function newId() {
 	return crypto.randomUUID();
 }
 
+// Ingredient ids show up in instruction tokens, so keep them short; they only need to be unique per recipe.
+function newIngredientId(draft: Draft) {
+	const taken = new Set(draft.body.ingredientGroups.flatMap((g) => g.ingredients.map((i) => i.id)));
+	let id: string;
+	do id = crypto.randomUUID().slice(0, 8);
+	while (taken.has(id));
+	return id;
+}
+
 function withBody(draft: Draft, body: Partial<RecipeBody.Body>): Draft {
 	return { ...draft, body: { ...draft.body, ...body } };
 }
@@ -182,7 +191,7 @@ export function removeGroup(draft: Draft, groupId: string): Draft {
 
 // Ingredients
 
-export function addIngredient(draft: Draft, groupId: string, id: string = newId()): Draft {
+export function addIngredient(draft: Draft, groupId: string, id: string = newIngredientId(draft)): Draft {
 	const ingredient = { id, amount: "", units: "", name: "", preparation: "" };
 	const groups = patchById(draft.body.ingredientGroups, groupId, (g) => ({
 		...g,

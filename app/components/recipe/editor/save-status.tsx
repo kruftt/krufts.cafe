@@ -33,7 +33,7 @@ export function SaveStatus() {
 			{status === "saved" && <CheckIcon className="size-4" />}
 			{status === "dirty" && <CircleDotIcon className="size-4" />}
 			{status === "saving" && <Spinner className="size-4" />}
-			<span>{{ saved: "Saved", dirty: "Unsaved changes", saving: "Saving..." }[status]}</span>
+			<span>{{ saved: "Saved", dirty: "Changes pending...", saving: "Saving..." }[status]}</span>
 		</div>
 	);
 }
