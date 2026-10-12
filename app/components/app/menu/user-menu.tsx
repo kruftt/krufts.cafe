@@ -30,6 +30,9 @@ export function UserMenu({ user }: { user: SessionUser }) {
 						<Link tabIndex={0} className="w-1/1" to="/bookmarks/">Bookmarks</Link>
 					</DropdownMenuItem>
 					<DropdownMenuItem>
+						<Link tabIndex={0} className="w-1/1" to="/meal-plan/">Meal Plan</Link>
+					</DropdownMenuItem>
+					<DropdownMenuItem>
 						<Link tabIndex={0} className="w-1/1" to="/profile/">Profile</Link>
 					</DropdownMenuItem>
 				</DropdownMenuGroup>

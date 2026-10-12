@@ -33,6 +33,7 @@ model Recipe {
   updatedAt           DateTime      @default(now()) @updatedAt
   pins                Pin[]
   bookmarks           Bookmark[]
+  mealPlanEntries     MealPlanEntry[]
 
   @@map("recipe")
 }
@@ -59,6 +60,30 @@ model Bookmark {
   @@unique([userId, recipeId])
 }
 
+// Rolling Mon-Sun template; day 0 = Monday.
+model MealPlanEntry {
+  id            Int       @id @default(autoincrement())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeId      Int
+  recipe        Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  day           Int
+  position      Int       @default(0)
+
+  @@map("meal_plan_entry")
+  @@index([userId, day, position])
+}
+
+model MealPlanNote {
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day           Int
+  text          String
+
+  @@map("meal_plan_note")
+  @@id([userId, day])
+}
+
 // Better auth models:
 
 model User {
@@ -75,6 +100,8 @@ model User {
   recipes       Recipe[]
   pins          Pin[]
   bookmarks     Bookmark[]
+  mealPlanEntries MealPlanEntry[]
+  mealPlanNotes MealPlanNote[]
 
   @@unique([email])
   @@map("user")

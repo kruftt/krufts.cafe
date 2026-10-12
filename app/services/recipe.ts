@@ -1,5 +1,6 @@
 import { prisma } from "@lib/prisma";
 import { type Recipe, RecipeBody } from "@schema";
+import { removeUnpublishedFromPlans } from "./meal-plan";
 
 export async function newRecipeName(userId: string) {
 	const base = "New Recipe";
@@ -46,7 +47,10 @@ export async function saveRecipe(userId: string, input: Recipe.Save): Promise<Sa
 			version: { increment: 1 },
 		},
 	});
-	if (count === 1) return { ok: true, version: version + 1 };
+	if (count === 1) {
+		if (!fields.published) await removeUnpublishedFromPlans(id, userId);
+		return { ok: true, version: version + 1 };
+	}
 
 	const existing = await prisma.recipe.findUnique({ where: { id }, select: { userId: true } });
 	if (!existing) return { ok: false, code: "NOT_FOUND" };
