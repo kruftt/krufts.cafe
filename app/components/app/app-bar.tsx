@@ -18,7 +18,7 @@ export function AppBar() {
 			className={cn(
 				"relative z-10 w-1/1 h-16 p-4 text-white shadow-[0_0_3px_3px_rgba(0,0,0,0.2)]",
 				"bg-chart-2",
-				"dark:bg-cafe-blue-1-d",
+				// "dark:bg-cafe-blue-1-d",
 				// "bg-cafe-blue-1",
 				// "dark:bg-cafe-blue-1-d",
 			)}
@@ -26,7 +26,7 @@ export function AppBar() {
 			<Link
 				to="/"
 				tabIndex={0}
-				className={`${buttonVariants()} absolute top-3 left-2 h-10 rounded-2xl! drop-shadow-md/50 bg-cafe-blue-1! opacity-85`}
+				className={`${buttonVariants()} absolute top-3 left-2 h-10 rounded-2xl! drop-shadow-md/50 bg-cafe-blue-1! dark:bg-cafe-blue-1-dark! opacity-85`}
 			>
 				<BsCupHotFill className="w-5! h-5!" color={`${theme ? "white" : "white"}`} />
 				<h1 className="text-md mx-1 relative top-0.5 hidden sm:block text-white/90">

@@ -6,7 +6,7 @@ import { LoginForm } from "./login-form";
 export function LoginPopover() {
 	return (
 		<Popover>
-			<PopoverTrigger render={<Button className="drop-shadow-md/30 bg-cafe-blue-1 text-white/90" />}>
+			<PopoverTrigger render={<Button className="drop-shadow-md/30 bg-cafe-blue-1 hover:bg-cafe-blue-2 dark:bg-cafe-blue-1-dark dark:hover:bg-cafe-blue-2-dark text-white/90" />}>
 				login
 			</PopoverTrigger>
 			<PopoverContent>
