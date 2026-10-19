@@ -2,6 +2,7 @@ import { Container, Header, Panel } from "@components/app";
 import { DeletionDialog } from "@components/controls";
 import { PlanDay, RecipePicker, ShoppingList } from "@components/meal-plan";
 import { Button } from "@components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { requireAuth } from "@lib/auth-loader";
 import { useTRPC } from "@lib/trpc";
 import { MealPlan } from "@schema";
@@ -48,52 +49,63 @@ export default function MealPlanPage({ loaderData }: Route.ComponentProps) {
 				</Header.Title>
 			</Header.Section>
 
-			<Panel.Section>
-				<div className="flex items-center justify-between">
-					<Panel.Title>This Week</Panel.Title>
-					<DeletionDialog
-						title="Clear Meal Plan"
-						message="All recipes and notes will be removed from:"
-						item="This week's plan"
-						onConfirm={() => clearMutation.mutate()}
-					>
-						<Button variant="ghost" size="sm" disabled={!plan.entries.length && !Object.keys(plan.notes).length}>
-							Clear week
-						</Button>
-					</DeletionDialog>
-				</div>
-				<div className="flex flex-col gap-3">
-					{MealPlan.DAYS.map((name, day) => (
-						<PlanDay
-							key={name}
-							day={day}
-							entries={plan.entries.filter((e) => e.day === day)}
-							note={plan.notes[day] ?? ""}
-							targeted={targetDay === day}
-							onAdd={startAdding}
-							onRemove={(id) => removeMutation.mutate({ id })}
-							onNoteChange={(day, text) => noteMutation.mutate({ day, text })}
+			<Tabs defaultValue="plan">
+				<TabsList className="self-center">
+					<TabsTrigger value="plan">Plan</TabsTrigger>
+					<TabsTrigger value="shopping">Shopping List</TabsTrigger>
+				</TabsList>
+
+				<TabsContent value="plan" keepMounted>
+					<Panel.Section>
+						<div className="flex items-center justify-between">
+							<Panel.Title>This Week</Panel.Title>
+							<DeletionDialog
+								title="Clear Meal Plan"
+								message="All recipes and notes will be removed from:"
+								item="This week's plan"
+								onConfirm={() => clearMutation.mutate()}
+							>
+								<Button variant="ghost" size="sm" disabled={!plan.entries.length && !Object.keys(plan.notes).length}>
+									Clear week
+								</Button>
+							</DeletionDialog>
+						</div>
+						<div className="flex flex-col gap-3">
+							{MealPlan.DAYS.map((name, day) => (
+								<PlanDay
+									key={name}
+									day={day}
+									entries={plan.entries.filter((e) => e.day === day)}
+									note={plan.notes[day] ?? ""}
+									targeted={targetDay === day}
+									onAdd={startAdding}
+									onRemove={(id) => removeMutation.mutate({ id })}
+									onNoteChange={(day, text) => noteMutation.mutate({ day, text })}
+								/>
+							))}
+						</div>
+					</Panel.Section>
+
+					<Panel.Section ref={pickerRef} className="scroll-mt-4">
+						<Panel.Title>Recipes</Panel.Title>
+						<RecipePicker
+							recipes={recipes}
+							targetDay={targetDay}
+							onTargetDayChange={setTargetDay}
+							onAdd={(day, recipeIds) => addMutation.mutate({ day, recipeIds })}
+							pending={addMutation.isPending}
+							inputRef={searchRef}
 						/>
-					))}
-				</div>
-			</Panel.Section>
+					</Panel.Section>
+				</TabsContent>
 
-			<Panel.Section ref={pickerRef} className="scroll-mt-4">
-				<Panel.Title>Recipes</Panel.Title>
-				<RecipePicker
-					recipes={recipes}
-					targetDay={targetDay}
-					onTargetDayChange={setTargetDay}
-					onAdd={(day, recipeIds) => addMutation.mutate({ day, recipeIds })}
-					pending={addMutation.isPending}
-					inputRef={searchRef}
-				/>
-			</Panel.Section>
-
-			<Panel.Section>
-				<Panel.Title>Shopping List</Panel.Title>
-				<ShoppingList entries={plan.entries} />
-			</Panel.Section>
+				<TabsContent value="shopping">
+					<Panel.Section>
+						<Panel.Title>Shopping List</Panel.Title>
+						<ShoppingList entries={plan.entries} />
+					</Panel.Section>
+				</TabsContent>
+			</Tabs>
 		</Container>
 	);
 }

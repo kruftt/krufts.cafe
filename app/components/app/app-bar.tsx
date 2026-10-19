@@ -35,7 +35,7 @@ export function AppBar() {
 				method="get"
 				action="/"
         className={cn(
-          theme ? "bg-black/80" : "bg-gray-100/80",
+          theme ? "bg-black/78" : "bg-gray-100/78",
           "m-auto flex items-center w-64 rounded-full border border-white/20 px-3 py-1 gap-2"
         )}
 			>
