@@ -81,7 +81,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
 		s.set(pinnedRecipesAtom, pinnedRecipes);
 		return s;
 	}, [sessionUser, pins, bookmarks, pinnedRecipes]);
-	const [theme, setTheme] = useAtom(themeAtom);
+	const [theme, setTheme] = useAtom(themeAtom, { store });
 	useEffect(() => {
 		document.documentElement.classList.toggle("dark", theme);
 		document.documentElement.classList.toggle("light", !theme);
@@ -110,7 +110,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
 								className="fixed bottom-4 left-4 rounded-full"
 								onClick={() => setTheme(!theme)}
 							>
-								{theme ? <BsSunFill /> : <BsMoonStarsFill />}
+								{theme ? <BsSunFill /> : <BsMoonStarsFill color="black" />}
 							</Button>
 							<Scripts />
 						</body>

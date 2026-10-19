@@ -5,10 +5,13 @@ import { SearchIcon } from "lucide-react";
 import { BsCupHotFill } from "react-icons/bs";
 import { Link } from "react-router";
 import { LoginPopover, UserMenu } from "./menu";
+import { themeAtom } from '@atoms/theme';
+import { useAtom } from "jotai";
 
 export function AppBar() {
 	const user = useUser();
-	const isLoggedIn = user !== null;
+  const isLoggedIn = user !== null;
+  const [theme] = useAtom(themeAtom);
 
 	return (
 		<header
@@ -21,29 +24,37 @@ export function AppBar() {
 			<Link
 				to="/"
 				tabIndex={0}
-				className={`${buttonVariants()} absolute top-3 left-2 h-10 rounded-2xl! drop-shadow-md/50`}
+				className={`${buttonVariants()} absolute top-3 left-2 h-10 rounded-2xl! drop-shadow-md/50 opacity-90`}
 			>
-				<BsCupHotFill className="w-5! h-5!" />
-				<h1 className="text-md mx-1 relative top-0.5 text-white hidden sm:block">
+				<BsCupHotFill className="w-5! h-5!" color={`${theme ? "white" : "black"}`} />
+				<h1 className="text-md mx-1 relative top-0.5 hidden sm:block">
 					Kruft's Cafe
 				</h1>
 			</Link>
 			<form
 				method="get"
 				action="/"
-				className="m-auto flex items-center w-64 rounded-full bg-black/75 border border-white/20 px-3 py-1 gap-2"
+        className={cn(
+          theme ? "bg-black/80" : "bg-gray-100/80",
+          "m-auto flex items-center w-64 rounded-full border border-white/20 px-3 py-1 gap-2"
+        )}
 			>
 				<input
 					name="q"
 					type="text"
 					placeholder="Search all recipes.."
-					className="flex-1 bg-transparent outline-none text-white placeholder:text-white/50 text-sm"
+          className={cn(theme
+            ? "flex-1 bg-transparent outline-none text-white placeholder:text-white/50 text-sm"
+            : "flex-1 bg-transparent outline-none text-black placeholder:text-black/50 text-sm"
+          )}
 				/>
-				<button type="submit" className="text-white/70 hover:text-white">
+        <button type="submit" className={cn(
+          theme ? "text-white/70 hover:text-white" : "text-black/70 hover:text-black"
+        )}>
 					<SearchIcon size={16} />
 				</button>
 			</form>
-			<div className="absolute right-2 top-3.5 drop-shadow-md/30">
+			<div className="absolute right-2 top-3.5 drop-shadow-md/30 opacity-90">
 				{isLoggedIn && user ? <UserMenu user={user} /> : <LoginPopover />}
 			</div>
 		</header>

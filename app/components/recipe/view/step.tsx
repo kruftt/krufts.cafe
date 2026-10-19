@@ -39,17 +39,21 @@ export function Step({ index, single, step, ingredients, scale }: Props) {
         </Panel.Title>
       )}
 
-      {step.intro && (
-        <Panel.Item className="step__intro">{step.intro}</Panel.Item>
-      )}
+      {(used.length > 0 || step.intro) &&
+        <div className="flex gap-1 border-b">
+          {used.length > 0 && (
+            <Panel.Item className="step__ingredients">
+              {used.map(({ ingredient, amount }) => (
+                <span key={ingredient.id}>{formatIngredient(ingredient, amount, scale)}</span>
+              ))}
+            </Panel.Item>
+          )}
 
-      {used.length > 0 && (
-        <Panel.Item className="step__ingredients">
-          {used.map(({ ingredient, amount }) => (
-            <span key={ingredient.id}>{formatIngredient(ingredient, amount, scale)}</span>
-          ))}
-        </Panel.Item>
-      )}
+          {step.intro && (
+            <Panel.Item className="step__intro">{step.intro}</Panel.Item>
+          )}
+        </div>
+      }
 
       <Panel.Item>
         {step.instructions.map((instruction, i) => (
