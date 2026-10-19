@@ -18,7 +18,7 @@ export function UserMenu({ user }: { user: SessionUser }) {
 
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger render={<Button className="drop-shadow-md/30" />}>
+			<DropdownMenuTrigger render={<Button className="drop-shadow-md/30 bg-cafe-blue-1 text-white/90" />}>
 				{user.name}
 			</DropdownMenuTrigger>
 			<DropdownMenuContent>

@@ -15,7 +15,8 @@ export function PinBar() {
 			className={`grid transition-all duration-250 ${pinnedRecipes.length ? "grid-rows-[1fr]" : "grid-rows-[0.4fr] -mb-2"}`}
 		>
 			<div className="overflow-hidden relative z-5 shadow-[0_0_3px_3px_rgba(0,0,0,0.35)] dark:shadow-[0_0_3px_3px_rgba(0,0,0,1)] dark:shadow-black">
-				<div className="flex flex-wrap items-center bg-cafe-blue-1-dark gap-2 px-4 py-2">
+				<div className="flex flex-wrap items-center bg-chart-1 gap-2 px-4 py-2">
+				{/*<div className="flex flex-wrap items-center bg-cafe-blue-1-dark gap-2 px-4 py-2">*/}
 					<PinIcon size={16} className="text-white shrink-0 opacity-60" />
 					{pinnedRecipes.map((recipe) => (
 						<div

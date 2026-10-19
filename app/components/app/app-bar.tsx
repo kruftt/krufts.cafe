@@ -17,17 +17,19 @@ export function AppBar() {
 		<header
 			className={cn(
 				"relative z-10 w-1/1 h-16 p-4 text-white shadow-[0_0_3px_3px_rgba(0,0,0,0.2)]",
-				"bg-cafe-blue-1",
+				"bg-chart-2",
 				"dark:bg-cafe-blue-1-d",
+				// "bg-cafe-blue-1",
+				// "dark:bg-cafe-blue-1-d",
 			)}
 		>
 			<Link
 				to="/"
 				tabIndex={0}
-				className={`${buttonVariants()} absolute top-3 left-2 h-10 rounded-2xl! drop-shadow-md/50 opacity-90`}
+				className={`${buttonVariants()} absolute top-3 left-2 h-10 rounded-2xl! drop-shadow-md/50 bg-cafe-blue-1! opacity-85`}
 			>
-				<BsCupHotFill className="w-5! h-5!" color={`${theme ? "white" : "black"}`} />
-				<h1 className="text-md mx-1 relative top-0.5 hidden sm:block">
+				<BsCupHotFill className="w-5! h-5!" color={`${theme ? "white" : "white"}`} />
+				<h1 className="text-md mx-1 relative top-0.5 hidden sm:block text-white/90">
 					Kruft's Cafe
 				</h1>
 			</Link>
@@ -35,7 +37,7 @@ export function AppBar() {
 				method="get"
 				action="/"
         className={cn(
-          theme ? "bg-black/78" : "bg-gray-100/78",
+          theme ? "bg-black/40" : "bg-gray-100/75",
           "m-auto flex items-center w-64 rounded-full border border-white/20 px-3 py-1 gap-2"
         )}
 			>
@@ -54,7 +56,7 @@ export function AppBar() {
 					<SearchIcon size={16} />
 				</button>
 			</form>
-			<div className="absolute right-2 top-3.5 drop-shadow-md/30 opacity-90">
+			<div className="absolute right-2 top-3.5 drop-shadow-md/30 opacity-85">
 				{isLoggedIn && user ? <UserMenu user={user} /> : <LoginPopover />}
 			</div>
 		</header>
